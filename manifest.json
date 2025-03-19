@@ -1,0 +1,22 @@
+{
+  "manifest_version": 3,
+  "name": "KaleTube",
+  "version": "1.0",
+  "description": "Filter YouTube content to focus on educational and self-development videos.",
+  "icons": {
+    "16": "kale.png",
+    "48": "kale.png",
+    "128": "kale.png"
+  },
+  "permissions": ["activeTab", "storage", "scripting"],
+  "host_permissions": ["https://www.youtube.com/*", "https://generativelanguage.googleapis.com/*"],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "content_scripts": [
+    {
+      "matches": ["https://www.youtube.com/*"],
+      "js": ["content.js"]
+    }
+  ]
+}
