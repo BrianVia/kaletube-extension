@@ -2,6 +2,47 @@
 
 console.log("🚀 Content script loaded");
 
+// Function to show API key notice
+function showApiKeyNotice() {
+  if (document.getElementById('kaletube-api-notice')) {
+    return; // Notice already shown
+  }
+  
+  const notice = document.createElement('div');
+  notice.id = 'kaletube-api-notice';
+  notice.style.cssText = `
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    background-color: #4CAF50;
+    color: white;
+    padding: 15px;
+    border-radius: 5px;
+    z-index: 10000;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+    font-family: Arial, sans-serif;
+    max-width: 300px;
+  `;
+  
+  notice.innerHTML = `
+    <h3 style="margin: 0 0 10px 0; font-size: 16px;">KaleTube API Key Required</h3>
+    <p style="margin: 0 0 10px 0; font-size: 14px;">Please configure your Gemini API key in the extension settings.</p>
+    <button id="kaletube-open-options" style="background: white; color: #4CAF50; border: none; padding: 5px 10px; border-radius: 3px; cursor: pointer; font-weight: bold;">Configure Now</button>
+    <button id="kaletube-close-notice" style="background: transparent; color: white; border: none; padding: 5px 10px; cursor: pointer; position: absolute; top: 5px; right: 5px;">✕</button>
+  `;
+  
+  document.body.appendChild(notice);
+  
+  // Add event listeners
+  document.getElementById('kaletube-open-options').addEventListener('click', () => {
+    chrome.runtime.openOptionsPage();
+  });
+  
+  document.getElementById('kaletube-close-notice').addEventListener('click', () => {
+    document.getElementById('kaletube-api-notice').remove();
+  });
+}
+
 // Function to detect sponsored content
 function isSponsoredContent(element) {
   try {
@@ -133,6 +174,13 @@ function checkVideoContent(videoInfo) {
           
           if (response.error) {
             console.error("❌ Error from AI check:", response.error);
+            
+            // Check if API key is missing
+            if (response.needsApiKey) {
+              // Show notice to the user about missing API key
+              showApiKeyNotice();
+            }
+            
             reject(response.error);
           } else {
             console.log("✅ AI check result:", response.isQualifying ? "Qualified" : "Not qualified");

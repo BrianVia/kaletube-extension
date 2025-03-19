@@ -1,7 +1,25 @@
 // background.js
 
-// Replace with your actual Google Gemini API key
-const GEMINI_API_KEY = "YOUR-KEY-HERE";
+// Default API key will be replaced with user-configured key
+let GEMINI_API_KEY = "";
+
+// Load API key from storage
+chrome.storage.sync.get('geminiApiKey', (data) => {
+  if (data.geminiApiKey) {
+    console.log("🔑 API key loaded from storage");
+    GEMINI_API_KEY = data.geminiApiKey;
+  } else {
+    console.warn("⚠️ No API key found in storage");
+  }
+});
+
+// Listen for API key changes
+chrome.storage.onChanged.addListener((changes, namespace) => {
+  if (namespace === 'sync' && changes.geminiApiKey) {
+    console.log("🔄 API key updated");
+    GEMINI_API_KEY = changes.geminiApiKey.newValue;
+  }
+});
 
 // Function to call Google Gemini API
 async function callGeminiAPI(videoTitle, videoDescription, videoTags, videoCreator) {
@@ -9,7 +27,7 @@ async function callGeminiAPI(videoTitle, videoDescription, videoTags, videoCreat
     console.log("🤖 Calling Gemini API for:", videoTitle);
 
     const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-lite:generateContent?key=${GEMINI_API_KEY}`;
-
+    
     const requestBody = {
       contents: [
         {
@@ -115,6 +133,13 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
       creator,
       description: description ? description.substring(0, 50) + (description.length > 50 ? "..." : "") : "",
     });
+
+    // Check if API key is configured
+    if (!GEMINI_API_KEY) {
+      console.error("❌ No API key configured");
+      sendResponse({ error: "API key not configured", needsApiKey: true });
+      return true;
+    }
 
     // Call the Gemini API and send the response back to the content script
     callGeminiAPI(title, description, tags, creator)

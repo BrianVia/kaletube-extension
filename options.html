@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>KaleTube Options</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 20px;
+      max-width: 500px;
+    }
+    .container {
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+    }
+    h1 {
+      color: #4CAF50;
+      font-size: 24px;
+      margin-bottom: 20px;
+    }
+    label {
+      font-weight: bold;
+      display: block;
+      margin-bottom: 5px;
+    }
+    input[type="text"] {
+      width: 100%;
+      padding: 8px;
+      margin-bottom: 5px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      box-sizing: border-box;
+    }
+    button {
+      background-color: #4CAF50;
+      color: white;
+      padding: 10px 15px;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-weight: bold;
+      max-width: 150px;
+    }
+    button:hover {
+      background-color: #45a049;
+    }
+    .instructions {
+      background-color: #f8f8f8;
+      padding: 15px;
+      border-radius: 4px;
+      border-left: 4px solid #4CAF50;
+      font-size: 14px;
+      line-height: 1.5;
+      margin-top: 20px;
+    }
+    .status {
+      margin-top: 10px;
+      font-size: 14px;
+      padding: 10px;
+      border-radius: 4px;
+      display: none;
+    }
+    .status.success {
+      background-color: #e8f5e9;
+      color: #2e7d32;
+      display: block;
+    }
+    .status.error {
+      background-color: #ffebee;
+      color: #c62828;
+      display: block;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>KaleTube Options</h1>
+    
+    <div>
+      <label for="apiKey">Gemini API Key:</label>
+      <input type="text" id="apiKey" placeholder="Enter your Gemini API key">
+      <button id="saveButton">Save</button>
+      <div id="status" class="status"></div>
+    </div>
+    
+    <div class="instructions">
+      <h3>How to get a Gemini API Key:</h3>
+      <ol>
+        <li>Visit <a href="https://ai.google.dev/" target="_blank">https://ai.google.dev/</a></li>
+        <li>Sign in with your Google account</li>
+        <li>Navigate to the API Keys section</li>
+        <li>Create a new API key</li>
+        <li>Copy and paste the key above</li>
+      </ol>
+      <p><strong>Note:</strong> Your API key is stored locally on your device and is only used to call the Gemini API for content filtering.</p>
+    </div>
+  </div>
+
+  <script src="options.js"></script>
+</body>
+</html>
