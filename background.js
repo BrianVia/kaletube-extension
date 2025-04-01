@@ -60,6 +60,7 @@ Examples of topics that would be considered educational or related to self-devel
 - Emotional Intelligence
 - Self-Improvement
 - Economics, Finance, Investing
+- Music/Mixtapes/EDM
 
 Examples of topics that would be considered non-educational or not related to self-development:
 - Video Games (Counter-Strike, FACEIT, else, Fortnite, etc.)

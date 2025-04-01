@@ -48,19 +48,30 @@ function isSponsoredContent(element) {
   try {
     // Check for sponsored content indicators
     const adBadgeElements = element.querySelectorAll('badge-shape-wiz--ad, .badge-shape-wiz--ads-include-dot, .ytwAdBadgeViewModelHost');
-    const adTextElements = element.querySelectorAll('[title="Sponsored"], span:contains("Sponsored"), div:contains("Sponsored"), div:contains("Ad")');
-    const adRenderingElements = element.querySelectorAll('ytd-in-feed-ad-layout-renderer, div#rendering-content');
-    
+    const adTextElements = element.querySelectorAll('[title="Sponsored"]');
+
+    // Check for text content separately since :contains() isn't valid CSS
+    const allSpans = element.querySelectorAll("span");
+    const allDivs = element.querySelectorAll("div");
+    const sponsoredSpans = Array.from(allSpans).filter((span) => span.textContent.includes("Sponsored"));
+    const sponsoredDivs = Array.from(allDivs).filter(
+      (div) => div.textContent.includes("Sponsored") || div.textContent.includes("Ad")
+    );
+
+    const adRenderingElements = element.querySelectorAll("ytd-in-feed-ad-layout-renderer, div#rendering-content");
+
     // Check if there's any ad-related metadata
-    const hasAdMetadata = element.querySelector('.ytwFeedAdMetadataViewModelHost') !== null;
-    
+    const hasAdMetadata = element.querySelector(".ytwFeedAdMetadataViewModelHost") !== null;
+
     return (
       adBadgeElements.length > 0 ||
-      adTextElements.length > 0 || 
+      adTextElements.length > 0 ||
+      sponsoredSpans.length > 0 ||
+      sponsoredDivs.length > 0 ||
       adRenderingElements.length > 0 ||
       hasAdMetadata ||
-      element.textContent.includes('Sponsored') ||
-      element.innerHTML.includes('ytd-in-feed-ad')
+      element.textContent.includes("Sponsored") ||
+      element.innerHTML.includes("ytd-in-feed-ad")
     );
   } catch (error) {
     console.warn("⚠️ Error checking for sponsored content:", error);
