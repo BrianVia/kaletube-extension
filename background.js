@@ -43,7 +43,7 @@ ${videoDescription ? `Description: "${videoDescription}"` : "No description avai
 
 Please follow these steps to evaluate the video:
 
-1. Determine if the video content suggests educational content or content related to self-development.
+1. Determine if the video content suggests educational content, music for working out, music for working to, or content related to self-development.
 2. Conclude with either "YES" if the content is educational or relevant to self-development, or "NO" if it is not.
 
 Examples of topics that would be considered educational or related to self-development:
@@ -53,7 +53,7 @@ Examples of topics that would be considered educational or related to self-devel
 - Motivation, Mindset
 - Entrepreneurship, Sales, Marketing
 - Time Management
-- Health and Fitness
+- Health and Fitness, Lifting Weights, etc.
 - Personal Finance
 - Career Development
 - Communication Skills
@@ -61,6 +61,8 @@ Examples of topics that would be considered educational or related to self-devel
 - Self-Improvement
 - Economics, Finance, Investing
 - Music/Mixtapes/EDM
+- Ambient Sound mixes, study music, etc.
+- Film Soundtracks (especially if they are from something like the Social Network)
 
 Examples of topics that would be considered non-educational or not related to self-development:
 - Video Games (Counter-Strike, FACEIT, else, Fortnite, etc.)
