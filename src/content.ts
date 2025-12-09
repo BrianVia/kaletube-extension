@@ -260,10 +260,11 @@ function getVideoInfo(element: Element): VideoInfo {
   }
 }
 
-// Function to hide non-qualifying videos
+// Function to hide non-qualifying videos by removing them from DOM
+// This forces YouTube's grid to reflow and fill gaps
 function hideVideo(element: Element): void {
-  console.log('🚫 Hiding video');
-  (element as HTMLElement).style.display = 'none';
+  console.log('🚫 Removing video from grid');
+  element.remove();
 }
 
 // Helper function to check if current time is within work hours
