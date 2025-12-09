@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>KaleTube Options</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 20px;
+      max-width: 500px;
+    }
+    .container {
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+    }
+    h1 {
+      color: #4CAF50;
+      font-size: 24px;
+      margin-bottom: 20px;
+    }
+    label {
+      font-weight: bold;
+      display: block;
+      margin-bottom: 5px;
+    }
+    input[type="text"] {
+      width: 100%;
+      padding: 8px;
+      margin-bottom: 5px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      box-sizing: border-box;
+    }
+    button {
+      background-color: #4CAF50;
+      color: white;
+      padding: 10px 15px;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-weight: bold;
+      max-width: 150px;
+    }
+    button:hover {
+      background-color: #45a049;
+    }
+    .instructions {
+      background-color: #f8f8f8;
+      padding: 15px;
+      border-radius: 4px;
+      border-left: 4px solid #4CAF50;
+      font-size: 14px;
+      line-height: 1.5;
+      margin-top: 20px;
+    }
+    .status {
+      margin-top: 10px;
+      font-size: 14px;
+      padding: 10px;
+      border-radius: 4px;
+      display: none;
+    }
+    .status.success {
+      background-color: #e8f5e9;
+      color: #2e7d32;
+      display: block;
+    }
+    .status.error {
+      background-color: #ffebee;
+      color: #c62828;
+      display: block;
+    }
+    .section {
+      margin-top: 30px;
+      padding-top: 20px;
+      border-top: 2px solid #e0e0e0;
+    }
+    .list-container {
+      margin-top: 10px;
+    }
+    .list-item {
+      background-color: #f5f5f5;
+      padding: 8px 12px;
+      margin: 5px 0;
+      border-radius: 4px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .list-item button {
+      background-color: #f44336;
+      padding: 5px 10px;
+      font-size: 12px;
+      max-width: 80px;
+    }
+    .list-item button:hover {
+      background-color: #d32f2f;
+    }
+    .add-form {
+      display: flex;
+      gap: 10px;
+      margin-top: 10px;
+    }
+    .add-form input {
+      flex: 1;
+      margin-bottom: 0;
+    }
+    .add-form button {
+      max-width: 100px;
+    }
+    .time-input-group {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      margin-top: 10px;
+    }
+    .time-input-group input[type="time"] {
+      width: auto;
+      padding: 8px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+    }
+    .time-input-group label {
+      margin: 0;
+      font-weight: normal;
+    }
+    .checkbox-group {
+      margin-top: 10px;
+    }
+    .checkbox-group label {
+      font-weight: normal;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .checkbox-group input[type="checkbox"] {
+      width: auto;
+    }
+    h2 {
+      color: #333;
+      font-size: 18px;
+      margin-bottom: 10px;
+    }
+    .empty-list {
+      color: #999;
+      font-style: italic;
+      padding: 10px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>KaleTube Options</h1>
+
+    <div>
+      <label for="apiKey">Gemini API Key:</label>
+      <input type="text" id="apiKey" placeholder="Enter your Gemini API key">
+      <button id="saveButton">Save</button>
+      <div id="status" class="status"></div>
+    </div>
+
+    <div class="instructions">
+      <h3>How to get a Gemini API Key:</h3>
+      <ol>
+        <li>Visit <a href="https://ai.google.dev/" target="_blank">https://ai.google.dev/</a></li>
+        <li>Sign in with your Google account</li>
+        <li>Navigate to the API Keys section</li>
+        <li>Create a new API key</li>
+        <li>Copy and paste the key above</li>
+      </ol>
+      <p><strong>Note:</strong> Your API key is stored locally on your device and is only used to call the Gemini API for content filtering.</p>
+    </div>
+
+    <div class="section">
+      <h2>Whitelisted Creators</h2>
+      <p style="font-size: 14px; color: #666;">These creators will always be shown, regardless of content.</p>
+      <div class="add-form">
+        <input type="text" id="whitelistInput" placeholder="Enter creator name (e.g., @username or Channel Name)">
+        <button id="addWhitelistBtn">Add</button>
+      </div>
+      <div id="whitelistContainer" class="list-container"></div>
+    </div>
+
+    <div class="section">
+      <h2>Blocklisted Creators</h2>
+      <p style="font-size: 14px; color: #666;">These creators will be hidden <strong>only during work hours</strong> (configured below).</p>
+      <div class="add-form">
+        <input type="text" id="blocklistInput" placeholder="Enter creator name (e.g., @username or Channel Name)">
+        <button id="addBlocklistBtn">Add</button>
+      </div>
+      <div id="blocklistContainer" class="list-container"></div>
+    </div>
+
+    <div class="section">
+      <h2>Time-Based Blocking</h2>
+      <p style="font-size: 14px; color: #666;">During work hours: blocklisted creators are hidden AND all other videos (except whitelisted) are validated by AI.</p>
+      <p style="font-size: 14px; color: #666;">Outside work hours: all videos are shown without AI validation (except ads).</p>
+
+      <div class="checkbox-group">
+        <label>
+          <input type="checkbox" id="enableWorkHours">
+          Enable work hours blocking
+        </label>
+      </div>
+
+      <div class="time-input-group">
+        <label for="workStartTime">Start:</label>
+        <input type="time" id="workStartTime" value="09:00">
+        <label for="workEndTime">End:</label>
+        <input type="time" id="workEndTime" value="17:00">
+      </div>
+
+      <div class="checkbox-group" style="margin-top: 15px;">
+        <label style="font-weight: normal; font-size: 14px; color: #666;">
+          Block on weekends:
+        </label>
+        <label>
+          <input type="checkbox" id="blockSaturday">
+          Saturday
+        </label>
+        <label>
+          <input type="checkbox" id="blockSunday">
+          Sunday
+        </label>
+      </div>
+
+      <button id="saveTimeRules" style="margin-top: 15px;">Save Time Rules</button>
+      <div id="timeStatus" class="status"></div>
+    </div>
+  </div>
+
+  <script src="options.js" type="module"></script>
+</body>
+</html>

@@ -3,16 +3,25 @@
   "version": "1.0.0",
   "description": "Filter YouTube content to focus on educational and self-development videos",
   "main": "index.js",
+  "type": "module",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "dev": "vite build --watch",
+    "build": "tsc && vite build && npm run copy-public",
+    "copy-public": "cp -r public/* dist/",
+    "preview": "vite preview",
     "lint": "npx eslint .",
-    "format": "npx prettier --write \"**/*.js\"",
-    "build:firefox": "web-ext build --source-dir ./",
-    "start:firefox": "web-ext run --source-dir ./"
+    "format": "npx prettier --write \"src/**/*.ts\"",
+    "build:firefox": "npm run build && web-ext build --source-dir ./dist",
+    "start:firefox": "npm run build && web-ext run --source-dir ./dist"
   },
   "author": "",
   "license": "ISC",
   "devDependencies": {
+    "@types/chrome": "^0.1.32",
+    "@types/webextension-polyfill": "^0.12.4",
+    "typescript": "^5.9.3",
+    "vite": "^7.2.7",
+    "vite-plugin-web-extension": "^4.5.0",
     "web-ext": "^7.8.0",
     "webextension-polyfill": "^0.10.0"
   }
