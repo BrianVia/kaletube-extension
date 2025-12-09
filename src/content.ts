@@ -502,14 +502,17 @@ function monitorForContent(): void {
             });
 
             // Check if this is a new video element from infinite scroll
+            // Add delay to allow YouTube to populate the video data
             if (
               element.matches &&
               (element.matches('ytd-rich-item-renderer') ||
                 element.matches('ytd-video-renderer') ||
                 element.matches('ytd-grid-video-renderer'))
             ) {
-              console.log('📹 Found new video from infinite scroll');
-              processVideoElement(element);
+              setTimeout(() => {
+                console.log('📹 Found new video from infinite scroll');
+                processVideoElement(element);
+              }, 500);
             }
 
             // Also check for video elements inside the added node
@@ -521,8 +524,10 @@ function monitorForContent(): void {
             videoSelectors.forEach((selector) => {
               const videoElements = element.querySelectorAll(selector);
               videoElements.forEach((videoElement) => {
-                console.log('📹 Found new video inside added node');
-                processVideoElement(videoElement);
+                setTimeout(() => {
+                  console.log('📹 Found new video inside added node');
+                  processVideoElement(videoElement);
+                }, 500);
               });
             });
           }
