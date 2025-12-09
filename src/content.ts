@@ -5,6 +5,9 @@ console.log('🚀 Content script loaded');
 // Cache for checked videos to avoid redundant API calls
 const checkedVideos = new Map<string, boolean>();
 
+// Global extension enabled state
+let extensionEnabled = true;
+
 // Whitelist and blocklist data (loaded from storage)
 let whitelist: string[] = [];
 let blocklist: string[] = [];
@@ -16,19 +19,29 @@ let timeRules: TimeRules = {
   blockSunday: false,
 };
 
-// Load whitelist, blocklist, and time rules from storage
-chrome.storage.sync.get(['whitelist', 'blocklist', 'timeRules'], (data: StorageData) => {
-  whitelist = data.whitelist || [];
-  blocklist = data.blocklist || [];
-  timeRules = data.timeRules || timeRules;
-  console.log('📋 Loaded whitelist:', whitelist);
-  console.log('📋 Loaded blocklist:', blocklist);
-  console.log('⏰ Loaded time rules:', timeRules);
-});
+// Load extension state, whitelist, blocklist, and time rules from storage
+chrome.storage.sync.get(
+  ['extensionEnabled', 'whitelist', 'blocklist', 'timeRules'],
+  (data: StorageData) => {
+    // Default to enabled if not set
+    extensionEnabled = data.extensionEnabled !== false;
+    whitelist = data.whitelist || [];
+    blocklist = data.blocklist || [];
+    timeRules = data.timeRules || timeRules;
+    console.log('🔌 Extension enabled:', extensionEnabled);
+    console.log('📋 Loaded whitelist:', whitelist);
+    console.log('📋 Loaded blocklist:', blocklist);
+    console.log('⏰ Loaded time rules:', timeRules);
+  }
+);
 
-// Listen for changes to whitelist, blocklist, and time rules
+// Listen for changes to extension state, whitelist, blocklist, and time rules
 chrome.storage.onChanged.addListener((changes, namespace) => {
   if (namespace === 'sync') {
+    if (changes.extensionEnabled) {
+      extensionEnabled = (changes.extensionEnabled.newValue as boolean) !== false;
+      console.log('🔌 Extension enabled changed:', extensionEnabled);
+    }
     if (changes.whitelist) {
       whitelist = (changes.whitelist.newValue as string[]) || [];
       console.log('📋 Whitelist updated:', whitelist);
@@ -307,10 +320,16 @@ function isBlocklisted(creator: string): boolean {
 
 // Function to process a single video element
 async function processVideoElement(element: Element): Promise<void> {
-  // First, check if this is sponsored content
+  // First, check if this is sponsored content (always hide ads, even if extension is disabled)
   if (isSponsoredContent(element)) {
     console.log('🛑 Found sponsored content - hiding automatically');
     hideVideo(element);
+    return;
+  }
+
+  // If extension is disabled, show all content (except ads which were handled above)
+  if (!extensionEnabled) {
+    console.log('🔌 Extension disabled - showing all content');
     return;
   }
 
@@ -328,29 +347,32 @@ async function processVideoElement(element: Element): Promise<void> {
     return;
   }
 
-  // Check if we're in work hours
+  // Determine if we should apply filtering
+  // If time rules are enabled, only filter during work hours
+  // If time rules are disabled, always filter (extension is globally on)
   const inWorkHours = isWithinWorkHours();
+  const shouldFilter = timeRules.enabled ? inWorkHours : true;
 
-  // If blocklisted and in work hours, hide immediately
-  if (isBlocklisted(creator) && inWorkHours) {
-    console.log(`🚫 Blocklisted creator during work hours: ${creator} - hiding`);
+  // If blocklisted and filtering is active, hide immediately
+  if (isBlocklisted(creator) && shouldFilter) {
+    console.log(`🚫 Blocklisted creator: ${creator} - hiding`);
     hideVideo(element);
     return;
   }
 
-  // If blocklisted but NOT in work hours, show
-  if (isBlocklisted(creator) && !inWorkHours) {
+  // If blocklisted but filtering is NOT active, show
+  if (isBlocklisted(creator) && !shouldFilter) {
     console.log(`👀 Blocklisted creator outside work hours: ${creator} - showing`);
     return;
   }
 
-  // If NOT in work hours, show everything (skip LLM validation)
-  if (!inWorkHours) {
+  // If filtering is NOT active, show everything (skip LLM validation)
+  if (!shouldFilter) {
     console.log(`🌙 Outside work hours - showing without LLM check: ${videoInfo.title}`);
     return;
   }
 
-  // If we're here: in work hours, not whitelisted, not blocklisted
+  // If we're here: filtering is active, not whitelisted, not blocklisted
   // Run LLM validation
   try {
     console.log('🔍 Processing video:', videoInfo.title);

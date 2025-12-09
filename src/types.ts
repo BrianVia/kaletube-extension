@@ -1,6 +1,7 @@
 // Storage types
 export interface StorageData {
   geminiApiKey?: string;
+  extensionEnabled?: boolean;
   whitelist?: string[];
   blocklist?: string[];
   timeRules?: TimeRules;

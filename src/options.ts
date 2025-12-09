@@ -1,5 +1,9 @@
 import type { StorageData, TimeRules } from './types';
 
+// Get DOM elements - Global Toggle
+const extensionToggle = document.getElementById('extensionToggle') as HTMLInputElement;
+const toggleStatus = document.getElementById('toggleStatus') as HTMLDivElement;
+
 // Get DOM elements - API Key
 const apiKeyInput = document.getElementById('apiKey') as HTMLInputElement;
 const saveButton = document.getElementById('saveButton') as HTMLButtonElement;
@@ -26,8 +30,27 @@ const timeStatus = document.getElementById('timeStatus') as HTMLDivElement;
 let whitelist: string[] = [];
 let blocklist: string[] = [];
 
+// Update toggle status text
+function updateToggleStatus(enabled: boolean): void {
+  if (enabled) {
+    toggleStatus.textContent = 'Filtering is active';
+    toggleStatus.style.color = '#4CAF50';
+  } else {
+    toggleStatus.textContent = 'Extension is disabled - all content shown';
+    toggleStatus.style.color = '#999';
+  }
+}
+
 // Load saved data on page load
 document.addEventListener('DOMContentLoaded', () => {
+  // Load extension enabled state
+  chrome.storage.sync.get('extensionEnabled', (data: StorageData) => {
+    // Default to enabled if not set
+    const enabled = data.extensionEnabled !== false;
+    extensionToggle.checked = enabled;
+    updateToggleStatus(enabled);
+  });
+
   // Load API key
   chrome.storage.sync.get('geminiApiKey', (data: StorageData) => {
     if (data.geminiApiKey) {
@@ -311,4 +334,17 @@ blocklistInput.addEventListener('keypress', (e) => {
   if (e.key === 'Enter') {
     addBlocklistBtn.click();
   }
+});
+
+// Handle global extension toggle
+extensionToggle.addEventListener('change', () => {
+  const enabled = extensionToggle.checked;
+  chrome.storage.sync.set({ extensionEnabled: enabled }, () => {
+    if (chrome.runtime.lastError) {
+      console.error('Failed to save extension state:', chrome.runtime.lastError.message);
+      return;
+    }
+    updateToggleStatus(enabled);
+    console.log(`Extension ${enabled ? 'enabled' : 'disabled'}`);
+  });
 });
