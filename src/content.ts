@@ -154,8 +154,13 @@ function isSponsoredContent(element: Element): boolean {
 // Function to extract video information
 function getVideoInfo(element: Element): VideoInfo {
   try {
-    // Extract video title
+    // Extract video title - try new YouTube layout first, then legacy
     const titleSelectors = [
+      // New yt-lockup-view-model layout (2024+)
+      'h3.yt-lockup-metadata-view-model__heading-reset',
+      '.yt-lockup-metadata-view-model__title',
+      'span.yt-core-attributed-string[role="text"]',
+      // Legacy ytd layout
       '#video-title',
       'a#video-title-link',
       'a.yt-simple-endpoint',
@@ -183,20 +188,37 @@ function getVideoInfo(element: Element): VideoInfo {
       return { title: 'Unknown Video', creator: 'Unknown Creator', description: '' };
     }
 
-    // Get either text content or title attribute
+    // Get either title attribute (preferred for new layout) or text content
     const title =
-      titleElement.textContent?.trim() ||
       titleElement.getAttribute('title')?.trim() ||
+      titleElement.textContent?.trim() ||
       'Unknown Video';
 
-    // Extract video creator
+    // Extract video creator - try new layout first, then legacy
     let creator = 'Unknown Creator';
     try {
-      const creatorElement = element.querySelector(
-        'ytd-channel-name #text a, yt-formatted-string a[href^="/@"]'
-      );
-      if (creatorElement) {
-        creator = creatorElement.textContent?.trim() || 'Unknown Creator';
+      const creatorSelectors = [
+        // New yt-lockup-view-model layout - channel links
+        'a.yt-core-attributed-string__link[href^="/channel/"]',
+        'a.yt-core-attributed-string__link[href^="/@"]',
+        // Legacy ytd layout
+        'ytd-channel-name #text a',
+        'yt-formatted-string a[href^="/@"]',
+        'yt-formatted-string a[href^="/channel/"]',
+      ];
+
+      for (const selector of creatorSelectors) {
+        const creatorElement = element.querySelector(selector);
+        if (creatorElement) {
+          // For new layout, get just the first text node (creator name without badge)
+          const firstChild = creatorElement.firstChild;
+          if (firstChild && firstChild.nodeType === Node.TEXT_NODE) {
+            creator = firstChild.textContent?.trim() || 'Unknown Creator';
+          } else {
+            creator = creatorElement.textContent?.trim() || 'Unknown Creator';
+          }
+          break;
+        }
       }
     } catch (error) {
       console.warn('⚠️ Error getting video creator:', error);
@@ -345,12 +367,14 @@ async function processVideoElement(element: Element): Promise<void> {
 }
 
 // Function to wait for videos to load dynamically
+// Video container selectors - both new (yt-lockup) and legacy (ytd) layouts
+const VIDEO_SELECTORS =
+  'yt-lockup-view-model, ytd-rich-item-renderer, ytd-video-renderer, ytd-grid-video-renderer';
+
 async function waitForVideos(timeout = 10000): Promise<void> {
   const start = Date.now();
   while (Date.now() - start < timeout) {
-    const videos = document.querySelectorAll(
-      'ytd-rich-item-renderer, ytd-video-renderer, ytd-grid-video-renderer'
-    );
+    const videos = document.querySelectorAll(VIDEO_SELECTORS);
     if (videos.length > 0) {
       console.log('✅ Videos loaded, found:', videos.length);
       return;
@@ -442,22 +466,8 @@ async function processYouTubePage(): Promise<void> {
     }
   }
 
-  // YouTube might use different selectors for different pages
-  const selectors = [
-    'ytd-rich-item-renderer', // Home page
-    'ytd-video-renderer', // Search results
-    'ytd-grid-video-renderer', // Channel page
-  ];
-
-  let videoElements: Element[] = [];
-  for (const selector of selectors) {
-    const elements = document.querySelectorAll(selector);
-    if (elements.length > 0) {
-      console.log(`📋 Found ${elements.length} videos with selector ${selector}`);
-      videoElements = Array.from(elements);
-      break;
-    }
-  }
+  // Get all video elements using consolidated selectors (new + legacy layouts)
+  const videoElements = Array.from(document.querySelectorAll(VIDEO_SELECTORS));
 
   console.log(`📋 Total: ${videoElements.length} videos to process`);
 
@@ -503,12 +513,12 @@ function monitorForContent(): void {
 
             // Check if this is a new video element from infinite scroll
             // Add delay to allow YouTube to populate the video data
-            if (
-              element.matches &&
-              (element.matches('ytd-rich-item-renderer') ||
-                element.matches('ytd-video-renderer') ||
-                element.matches('ytd-grid-video-renderer'))
-            ) {
+            // Check both new (yt-lockup) and legacy (ytd) layouts
+            const videoSelectorList = VIDEO_SELECTORS.split(', ');
+            const isVideoElement =
+              element.matches && videoSelectorList.some((sel) => element.matches(sel));
+
+            if (isVideoElement) {
               setTimeout(() => {
                 console.log('📹 Found new video from infinite scroll');
                 processVideoElement(element);
@@ -516,19 +526,12 @@ function monitorForContent(): void {
             }
 
             // Also check for video elements inside the added node
-            const videoSelectors = [
-              'ytd-rich-item-renderer',
-              'ytd-video-renderer',
-              'ytd-grid-video-renderer',
-            ];
-            videoSelectors.forEach((selector) => {
-              const videoElements = element.querySelectorAll(selector);
-              videoElements.forEach((videoElement) => {
-                setTimeout(() => {
-                  console.log('📹 Found new video inside added node');
-                  processVideoElement(videoElement);
-                }, 500);
-              });
+            const videoElements = element.querySelectorAll(VIDEO_SELECTORS);
+            videoElements.forEach((videoElement) => {
+              setTimeout(() => {
+                console.log('📹 Found new video inside added node');
+                processVideoElement(videoElement);
+              }, 500);
             });
           }
         });
