@@ -84,6 +84,33 @@ kaletube-extension/
 3. Configure whitelisted/blocklisted creators
 4. Set up work hours and time-based rules
 
+## Security
+
+### API Key Storage
+
+Your Gemini API key is stored **locally** using Chrome's `storage.sync` API:
+- ✅ **Never committed to git** - Keys are stored in your browser only
+- ✅ **Encrypted by Chrome** - Chrome handles encryption at rest
+- ✅ **Sync across devices** - If you're signed into Chrome (optional)
+- ✅ **No server transmission** - Keys go directly from your browser to Google's API
+
+### What's NOT in the Repository
+
+The following are **never** committed to this repo:
+- API keys
+- User data (whitelists, blocklists, time rules)
+- node_modules
+- Build artifacts
+- Any credentials or secrets
+
+### Safe to Commit
+
+Only source code and configuration files are in git:
+- TypeScript source files
+- Build configuration
+- Static assets (manifest, HTML, icons)
+- Documentation
+
 ## How It Works
 
 ### Outside Work Hours
