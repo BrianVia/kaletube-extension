@@ -1,14 +1,19 @@
 {
   "name": "kaletube-extension",
   "version": "1.0.0",
-  "description": "",
+  "description": "Filter YouTube content to focus on educational and self-development videos",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "lint": "npx eslint .",
+    "format": "npx prettier --write \"**/*.js\"",
+    "build:firefox": "web-ext build --source-dir ./",
+    "start:firefox": "web-ext run --source-dir ./"
   },
   "author": "",
   "license": "ISC",
-  "dependencies": {
-    "@anthropic-ai/sdk": "^0.36.3"
+  "devDependencies": {
+    "web-ext": "^7.8.0",
+    "webextension-polyfill": "^0.10.0"
   }
 }

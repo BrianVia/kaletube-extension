@@ -4,7 +4,7 @@
 let GEMINI_API_KEY = "";
 
 // Load API key from storage
-chrome.storage.sync.get('geminiApiKey', (data) => {
+(browser || chrome).storage.sync.get('geminiApiKey', (data) => {
   if (data.geminiApiKey) {
     console.log("🔑 API key loaded from storage");
     GEMINI_API_KEY = data.geminiApiKey;
@@ -14,7 +14,7 @@ chrome.storage.sync.get('geminiApiKey', (data) => {
 });
 
 // Listen for API key changes
-chrome.storage.onChanged.addListener((changes, namespace) => {
+(browser || chrome).storage.onChanged.addListener((changes, namespace) => {
   if (namespace === 'sync' && changes.geminiApiKey) {
     console.log("🔄 API key updated");
     GEMINI_API_KEY = changes.geminiApiKey.newValue;
@@ -22,7 +22,9 @@ chrome.storage.onChanged.addListener((changes, namespace) => {
 });
 
 // Function to call Google Gemini API
-async function callGeminiAPI(videoTitle, videoDescription, videoTags, videoCreator) {
+async function callGeminiAPI(videoTitle, videoDescription, videoCreator, retryCount = 0) {
+  const MAX_RETRIES = 3;
+
   try {
     console.log("🤖 Calling Gemini API for:", videoTitle);
 
@@ -99,6 +101,13 @@ Only reply with YES or NO.`,
     });
 
     if (!response.ok) {
+      // Handle rate limiting with exponential backoff
+      if (response.status === 429 && retryCount < MAX_RETRIES) {
+        const delay = Math.pow(2, retryCount) * 1000; // 1s, 2s, 4s
+        console.log(`⏳ Rate limited. Retrying in ${delay}ms... (attempt ${retryCount + 1}/${MAX_RETRIES})`);
+        await new Promise(r => setTimeout(r, delay));
+        return callGeminiAPI(videoTitle, videoDescription, videoCreator, retryCount + 1);
+      }
       throw new Error(`API request failed: ${response.status} ${response.statusText}`);
     }
 
@@ -126,11 +135,11 @@ Only reply with YES or NO.`,
 }
 
 // Listen for messages from the content script
-chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+(browser || chrome).runtime.onMessage.addListener((request, sender, sendResponse) => {
   console.log("🔔 Background script received message:", request);
 
   if (request.action === "checkVideo" && request.videoInfo && request.videoInfo.title) {
-    const { title, description, tags, creator } = request.videoInfo;
+    const { title, description, creator } = request.videoInfo;
     console.log("📝 Processing video:", {
       title,
       creator,
@@ -145,7 +154,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     }
 
     // Call the Gemini API and send the response back to the content script
-    callGeminiAPI(title, description, tags, creator)
+    callGeminiAPI(title, description, creator)
       .then((result) => {
         console.log(`🤖 API result for "${title}":`, result);
         const isQualifying = result === "YES";
