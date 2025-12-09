@@ -263,8 +263,19 @@ function getVideoInfo(element: Element): VideoInfo {
 // Function to hide non-qualifying videos by removing them from DOM
 // This forces YouTube's grid to reflow and fill gaps
 function hideVideo(element: Element): void {
-  console.log('🚫 Removing video from grid');
-  element.remove();
+  // Find the outermost video container (the actual grid cell)
+  // to ensure proper grid reflow - yt-lockup-view-model is inside ytd-rich-item-renderer
+  const gridCell = element.closest(
+    'ytd-rich-item-renderer, ytd-video-renderer, ytd-grid-video-renderer'
+  );
+  if (gridCell) {
+    console.log('🚫 Removing video container from grid');
+    gridCell.remove();
+  } else {
+    // Fallback: remove the element itself
+    console.log('🚫 Removing video element directly');
+    element.remove();
+  }
 }
 
 // Helper function to check if current time is within work hours
