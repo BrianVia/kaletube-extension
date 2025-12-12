@@ -134,6 +134,26 @@ Only reply with YES or NO.`,
   }
 }
 
+// Helper function to get API key (checks variable first, then storage)
+async function getApiKey() {
+  if (GEMINI_API_KEY) {
+    return GEMINI_API_KEY;
+  }
+
+  // Check storage directly in case of race condition
+  return new Promise((resolve) => {
+    (browser || chrome).storage.sync.get('geminiApiKey', (data) => {
+      if (data.geminiApiKey) {
+        console.log("🔑 API key loaded from storage (on-demand)");
+        GEMINI_API_KEY = data.geminiApiKey;
+        resolve(data.geminiApiKey);
+      } else {
+        resolve(null);
+      }
+    });
+  });
+}
+
 // Listen for messages from the content script
 (browser || chrome).runtime.onMessage.addListener((request, sender, sendResponse) => {
   console.log("🔔 Background script received message:", request);
@@ -146,24 +166,26 @@ Only reply with YES or NO.`,
       description: description ? description.substring(0, 50) + (description.length > 50 ? "..." : "") : "",
     });
 
-    // Check if API key is configured
-    if (!GEMINI_API_KEY) {
-      console.error("❌ No API key configured");
-      sendResponse({ error: "API key not configured", needsApiKey: true });
-      return true;
-    }
+    // Get API key (handles race condition by checking storage if variable is empty)
+    getApiKey().then((apiKey) => {
+      if (!apiKey) {
+        console.error("❌ No API key configured");
+        sendResponse({ error: "API key not configured", needsApiKey: true });
+        return;
+      }
 
-    // Call the Gemini API and send the response back to the content script
-    callGeminiAPI(title, description, creator)
-      .then((result) => {
-        console.log(`🤖 API result for "${title}":`, result);
-        const isQualifying = result === "YES";
-        sendResponse({ isQualifying });
-      })
-      .catch((error) => {
-        console.error("❌ Error in Gemini API call:", error);
-        sendResponse({ error: "Failed to analyze video content" });
-      });
+      // Call the Gemini API and send the response back to the content script
+      callGeminiAPI(title, description, creator)
+        .then((result) => {
+          console.log(`🤖 API result for "${title}":`, result);
+          const isQualifying = result === "YES";
+          sendResponse({ isQualifying });
+        })
+        .catch((error) => {
+          console.error("❌ Error in Gemini API call:", error);
+          sendResponse({ error: "Failed to analyze video content" });
+        });
+    });
 
     // Return true to indicate that the response will be sent asynchronously
     return true;
