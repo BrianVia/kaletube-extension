@@ -19,14 +19,15 @@
   "author": "",
   "license": "ISC",
   "devDependencies": {
+    "@oxlint/plugins": "^1.78.0",
     "@types/chrome": "^0.1.32",
     "@types/webextension-polyfill": "^0.12.4",
+    "oxlint": "^1.78.0",
+    "oxlint-tsgolint": "^7.0.2001",
     "typescript": "^5.9.3",
     "vite": "^7.2.7",
     "vite-plugin-web-extension": "^4.5.0",
     "web-ext": "^7.8.0",
-    "webextension-polyfill": "^0.10.0",
-    "oxlint": "1.77.0",
-    "@oxlint/plugins": "1.77.0"
+    "webextension-polyfill": "^0.10.0"
   }
 }

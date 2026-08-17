@@ -1,8 +1,13 @@
 {
   "$schema": "./node_modules/oxlint/configuration_schema.json",
-  "plugins": ["typescript"],
+  "plugins": [
+    "typescript"
+  ],
   "jsPlugins": [
-    { "name": "anti-slop", "specifier": "./tools/oxlint/anti-slop/index.ts" }
+    {
+      "name": "anti-slop",
+      "specifier": "./tools/oxlint/anti-slop/index.ts"
+    }
   ],
   "rules": {
     "typescript/no-restricted-types": [
@@ -30,6 +35,12 @@
     "anti-slop/no-unknown-parameters": "warn",
     "anti-slop/no-unknown-type-aliases": "warn",
     "anti-slop/no-unsafe-dictionary-type": "warn",
-    "anti-slop/no-widen-then-assert": "warn"
+    "anti-slop/no-widen-then-assert": "warn",
+    "typescript/no-floating-promises": "warn",
+    "typescript/no-misused-promises": "warn",
+    "typescript/await-thenable": "warn"
+  },
+  "options": {
+    "typeAware": true
   }
 }
