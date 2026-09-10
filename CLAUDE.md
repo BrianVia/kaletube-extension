@@ -2,14 +2,13 @@
 
 ## Commands
 - **Install:** `npm install`
+- **Build:** `npm run build` (or `npm run dev` to watch)
 - **Load Extension:** Open Chrome, go to `chrome://extensions/`, enable Developer mode, and "Load unpacked"
-- **Lint:** `npx eslint .`
-- **Format:** `npx prettier --write "**/*.js"`
-- **Test:** `npx jest`
-- **Test Single File:** `npx jest path/to/test.js`
+- **Lint:** `npm run lint` (oxlint)
+- **Lint fix:** `npm run lint:fix`
 
 ## Code Style
-- **Language:** Modern JavaScript (ES6+) with Chrome Extension APIs
+- **Language:** TypeScript in `src/`, built with Vite to `dist/`; load `dist/` unpacked
 - **Naming:** camelCase for variables/functions, descriptive names
 - **Formatting:** 2-space indentation, single quotes, semicolons
 - **Error Handling:** Use try/catch blocks with detailed logging

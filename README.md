@@ -59,23 +59,16 @@ kaletube-extension/
 
 - `npm run build` - Build the extension for production
 - `npm run dev` - Watch mode for development
-- `npm run build:firefox` - Build and package for Firefox
-- `npm run start:firefox` - Run in Firefox for testing
 
 ## Installation
 
-### Chrome/Edge
+### Chrome/Edge (Chrome only; Firefox support was dropped)
 
 1. Run `npm run build`
 2. Open `chrome://extensions/`
 3. Enable "Developer mode"
 4. Click "Load unpacked"
 5. Select the `dist/` directory
-
-### Firefox
-
-1. Run `npm run build:firefox`
-2. Load the generated `.zip` file from `web-ext-artifacts/`
 
 ## Configuration
 

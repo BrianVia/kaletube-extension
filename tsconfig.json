@@ -11,8 +11,7 @@
     "esModuleInterop": true,
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
-    "types": ["chrome", "webextension-polyfill"],
-    "baseUrl": ".",
+    "types": ["chrome"],
     "paths": {
       "@/*": ["./src/*"]
     }
