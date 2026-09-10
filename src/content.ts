@@ -481,9 +481,21 @@ function checkVideoContent(videoInfo: VideoInfo): Promise<boolean> {
   });
 }
 
+// Function to check if we're on a search results page
+function isSearchPage(): boolean {
+  return window.location.pathname === '/results' ||
+         window.location.href.includes('search_query=');
+}
+
 // Main function to process YouTube page
 async function processYouTubePage(): Promise<void> {
   console.log('🎬 Starting to process YouTube page');
+
+  // Skip filtering on search results pages - user is actively searching
+  if (isSearchPage()) {
+    console.log('🔍 On search page - skipping content filtering');
+    return;
+  }
 
   // Wait for videos to load dynamically
   await waitForVideos();
@@ -523,6 +535,9 @@ async function processYouTubePage(): Promise<void> {
 function monitorForContent(): void {
   // Create a mutation observer to detect DOM changes
   const observer = new MutationObserver((mutations) => {
+    // Skip video filtering on search pages (but still block ads)
+    const onSearchPage = isSearchPage();
+
     mutations.forEach((mutation) => {
       if (mutation.addedNodes && mutation.addedNodes.length > 0) {
         mutation.addedNodes.forEach((node) => {
@@ -530,7 +545,7 @@ function monitorForContent(): void {
           if (node.nodeType === Node.ELEMENT_NODE) {
             const element = node as Element;
 
-            // Check for sponsored content in this element or its children
+            // Always check for sponsored content (even on search pages)
             if (isSponsoredContent(element)) {
               console.log('🛑 Found dynamically added sponsored content - hiding');
               hideVideo(element);
@@ -544,6 +559,11 @@ function monitorForContent(): void {
                 hideVideo(adElement);
               });
             });
+
+            // Skip video content filtering on search pages
+            if (onSearchPage) {
+              return;
+            }
 
             // Check if this is a new video element from infinite scroll
             // Add delay to allow YouTube to populate the video data
