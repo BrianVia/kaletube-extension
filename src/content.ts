@@ -127,7 +127,7 @@ function isSponsoredContent(element: Element): boolean {
   try {
     // Check for sponsored content indicators
     const adBadgeElements = element.querySelectorAll(
-      'badge-shape-wiz--ad, .badge-shape-wiz--ads-include-dot, .ytwAdBadgeViewModelHost'
+      'badge-shape-wiz--ad, .badge-shape-wiz--ads-include-dot, .ytwAdBadgeViewModelHost, ad-badge-view-model, badge-shape.ytBadgeShapeAd, feed-ad-metadata-view-model'
     );
     const adTextElements = element.querySelectorAll('[title="Sponsored"]');
 
@@ -169,7 +169,10 @@ function getVideoInfo(element: Element): VideoInfo {
   try {
     // Extract video title - try new YouTube layout first, then legacy
     const titleSelectors = [
-      // New yt-lockup-view-model layout (2024+)
+      // yt-lockup-view-model layout, camelCase classes (mid-2026)
+      'h3.ytLockupMetadataViewModelHeadingReset',
+      '.ytLockupMetadataViewModelTitle',
+      // yt-lockup-view-model layout, BEM classes (2024-2025)
       'h3.yt-lockup-metadata-view-model__heading-reset',
       '.yt-lockup-metadata-view-model__title',
       'span.yt-core-attributed-string[role="text"]',
@@ -231,6 +234,19 @@ function getVideoInfo(element: Element): VideoInfo {
             creator = creatorElement.textContent?.trim() || 'Unknown Creator';
           }
           break;
+        }
+      }
+      // Mid-2026 lockup layout: channel name is plain text in the first metadata row,
+      // no link. Skip rows that are view counts / dates.
+      // ponytail: regex on English strings; a locale-aware fallback would be a real parser.
+      if (creator === 'Unknown Creator') {
+        const rows = Array.from(element.querySelectorAll('.ytContentMetadataViewModelMetadataText'));
+        for (const row of rows) {
+          const text = row.firstChild?.textContent?.trim() || '';
+          if (text && !/\b(views?|ago|watching|streamed)\b/i.test(text)) {
+            creator = text;
+            break;
+          }
         }
       }
     } catch (error) {
