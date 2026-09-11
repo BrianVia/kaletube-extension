@@ -1,31 +1,18 @@
 import type { CheckVideoMessage, CheckVideoResponse, StorageData } from './types';
 
-// Default API key will be replaced with user-configured key
-let GEMINI_API_KEY = '';
-
-// Load API key from storage
-chrome.storage.sync.get('geminiApiKey', (data: StorageData) => {
-  if (data.geminiApiKey) {
-    console.log('🔑 API key loaded from storage');
-    GEMINI_API_KEY = data.geminiApiKey;
-  } else {
-    console.warn('⚠️ No API key found in storage');
-  }
-});
-
-// Listen for API key changes
-chrome.storage.onChanged.addListener((changes, namespace) => {
-  if (namespace === 'sync' && changes.geminiApiKey) {
-    console.log('🔄 API key updated');
-    GEMINI_API_KEY = (changes.geminiApiKey.newValue as string) || '';
-  }
-});
+// Read the key on every request. MV3 workers restart often, and a cached module
+// variable races the first message after restart (banner shows despite a key being set).
+async function getApiKey(): Promise<string> {
+  const data: StorageData = await chrome.storage.sync.get('geminiApiKey');
+  return data.geminiApiKey || '';
+}
 
 // Function to call Google Gemini API
 async function callGeminiAPI(
   videoTitle: string,
   videoDescription: string,
   videoCreator: string,
+  apiKey: string,
   retryCount = 0
 ): Promise<string | null> {
   const MAX_RETRIES = 3;
@@ -33,7 +20,7 @@ async function callGeminiAPI(
   try {
     console.log('🤖 Calling Gemini API for:', videoTitle);
 
-    const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash-lite:generateContent?key=${GEMINI_API_KEY}`;
+    const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash-lite:generateContent?key=${apiKey}`;
 
     const requestBody = {
       contents: [
@@ -113,7 +100,7 @@ Only reply with YES or NO.`,
           `⏳ Rate limited. Retrying in ${delay}ms... (attempt ${retryCount + 1}/${MAX_RETRIES})`
         );
         await new Promise((r) => setTimeout(r, delay));
-        return callGeminiAPI(videoTitle, videoDescription, videoCreator, retryCount + 1);
+        return callGeminiAPI(videoTitle, videoDescription, videoCreator, apiKey, retryCount + 1);
       }
       throw new Error(`API request failed: ${response.status} ${response.statusText}`);
     }
@@ -160,19 +147,17 @@ chrome.runtime.onMessage.addListener(
           : '',
       });
 
-      // Check if API key is configured
-      if (!GEMINI_API_KEY) {
-        console.error('❌ No API key configured');
-        sendResponse({ error: 'API key not configured', needsApiKey: true });
-        return true;
-      }
-
-      // Call the Gemini API and send the response back to the content script
-      callGeminiAPI(title, description, creator)
-        .then((result) => {
-          console.log(`🤖 API result for "${title}":`, result);
-          const isQualifying = result === 'YES';
-          sendResponse({ isQualifying });
+      getApiKey()
+        .then((apiKey) => {
+          if (!apiKey) {
+            console.error('❌ No API key configured');
+            sendResponse({ error: 'API key not configured', needsApiKey: true });
+            return;
+          }
+          return callGeminiAPI(title, description, creator, apiKey).then((result) => {
+            console.log(`🤖 API result for "${title}":`, result);
+            sendResponse({ isQualifying: result === 'YES' });
+          });
         })
         .catch((error) => {
           console.error('❌ Error in Gemini API call:', error);
