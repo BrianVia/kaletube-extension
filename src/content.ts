@@ -3,7 +3,7 @@ import type { VideoInfo, CheckVideoResponse, TimeRules, StorageData } from './ty
 console.log('🚀 Content script loaded');
 
 // Verdict cache, keyed by video ID (title as fallback). Persisted in chrome.storage.local
-// so reloads and other tabs don't re-ask Gemini about the same video.
+// so reloads and other tabs don't re-ask Jev about the same video.
 // ponytail: no eviction; ~15 bytes per entry, storage.local allows 10MB. Prune when it matters.
 const checkedVideos = new Map<string, boolean>();
 const verdictsLoaded = new Promise<void>((resolve) => {
@@ -108,7 +108,7 @@ function showApiKeyNotice(): void {
 
   const message = document.createElement('p');
   message.style.cssText = 'margin: 0 0 10px 0; font-size: 14px;';
-  message.textContent = 'Please configure your Gemini API key in the extension settings.';
+  message.textContent = 'Please configure your TypeSafe API key in the extension settings.';
 
   const configButton = document.createElement('button');
   configButton.id = 'kaletube-open-options';

@@ -4,7 +4,7 @@ A browser extension that filters YouTube content to show educational and self-de
 
 ## Features
 
-- **AI-Powered Content Filtering**: Uses Google Gemini API to identify educational content
+- **AI-Powered Content Filtering**: Uses TypeSafe Jev to identify educational content
 - **Whitelist/Blocklist System**: Manage which creators to always show or hide
 - **Time-Based Blocking**: Configure work hours when strict filtering applies
 - **Performance Optimized**: Caching, parallel processing, and batch API calls
@@ -15,7 +15,7 @@ A browser extension that filters YouTube content to show educational and self-de
 - **TypeScript**: Fully typed codebase for better development experience
 - **Vite**: Fast build tool with hot module replacement
 - **Chrome Extension APIs**: Manifest V3 compatible
-- **Google Gemini API**: AI-powered content analysis
+- **TypeSafe Jev**: Typed AI-powered content analysis
 
 ## Development
 
@@ -73,7 +73,7 @@ kaletube-extension/
 ## Configuration
 
 1. Click the extension icon or go to options
-2. Add your Gemini API key (get one at https://ai.google.dev/)
+2. Add your TypeSafe API key (get one at https://console.typesafe.ai)
 3. Configure whitelisted/blocklisted creators
 4. Set up work hours and time-based rules
 
@@ -81,11 +81,11 @@ kaletube-extension/
 
 ### API Key Storage
 
-Your Gemini API key is stored **locally** using Chrome's `storage.sync` API:
+Your TypeSafe API key is stored **locally** using Chrome's `storage.sync` API:
 - ✅ **Never committed to git** - Keys are stored in your browser only
 - ✅ **Encrypted by Chrome** - Chrome handles encryption at rest
 - ✅ **Sync across devices** - If you're signed into Chrome (optional)
-- ✅ **No server transmission** - Keys go directly from your browser to Google's API
+- ✅ **No server transmission** - Keys go directly from your browser to the TypeSafe API
 
 ### What's NOT in the Repository
 

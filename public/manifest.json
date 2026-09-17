@@ -15,7 +15,7 @@
     "128": "kale.png"
   },
   "permissions": ["activeTab", "storage"],
-  "host_permissions": ["https://www.youtube.com/*", "https://generativelanguage.googleapis.com/*"],
+  "host_permissions": ["https://www.youtube.com/*", "https://api.typesafe.ai/*"],
   "background": {
     "service_worker": "background.js",
     "type": "module"

@@ -52,10 +52,10 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   // Load API key
-  chrome.storage.sync.get('geminiApiKey', (data: StorageData) => {
-    if (data.geminiApiKey) {
+  chrome.storage.sync.get('typesafeApiKey', (data: StorageData) => {
+    if (data.typesafeApiKey) {
       // Show masked API key for security
-      const lastFour = data.geminiApiKey.slice(-4);
+      const lastFour = data.typesafeApiKey.slice(-4);
       apiKeyInput.placeholder = `**** **** **** ${lastFour}`;
 
       // Display success message
@@ -64,7 +64,7 @@ document.addEventListener('DOMContentLoaded', () => {
       // Focus on input when clicking the placeholder
       apiKeyInput.addEventListener('focus', () => {
         if (apiKeyInput.value === '') {
-          apiKeyInput.placeholder = 'Enter your Gemini API key';
+          apiKeyInput.placeholder = 'Enter your TypeSafe API key';
         }
       });
 
@@ -100,7 +100,7 @@ saveButton.addEventListener('click', () => {
   }
 
   // Save API key to storage
-  chrome.storage.sync.set({ geminiApiKey: apiKey }, () => {
+  chrome.storage.sync.set({ typesafeApiKey: apiKey }, () => {
     if (chrome.runtime.lastError) {
       showStatus('Failed to save API key: ' + chrome.runtime.lastError.message, 'error');
       return;
@@ -115,11 +115,8 @@ saveButton.addEventListener('click', () => {
   });
 });
 
-// Simple validation for Gemini API key format
 function validateApiKey(key: string): boolean {
-  // Gemini API keys are typically prefixed with "AIza" and are 39 characters long
-  // This is a basic check that can be updated if the format changes
-  return key.startsWith('AIza') && key.length >= 39;
+  return key.length > 0;
 }
 
 // Show status message
