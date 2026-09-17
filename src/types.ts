@@ -17,6 +17,7 @@ export interface TimeRules {
 
 // Video information
 export interface VideoInfo {
+  id?: string; // YouTube video ID; absent for cards without a watch link
   title: string;
   creator: string;
   description: string;

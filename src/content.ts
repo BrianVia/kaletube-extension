@@ -2,8 +2,21 @@ import type { VideoInfo, CheckVideoResponse, TimeRules, StorageData } from './ty
 
 console.log('🚀 Content script loaded');
 
-// Cache for checked videos to avoid redundant API calls
+// Verdict cache, keyed by video ID (title as fallback). Persisted in chrome.storage.local
+// so reloads and other tabs don't re-ask Jev about the same video.
+// ponytail: no eviction; ~15 bytes per entry, storage.local allows 10MB. Prune when it matters.
 const checkedVideos = new Map<string, boolean>();
+const verdictsLoaded = new Promise<void>((resolve) => {
+  chrome.storage.local.get('verdicts', (data: { verdicts?: Record<string, boolean> }) => {
+    for (const [key, value] of Object.entries(data.verdicts || {})) checkedVideos.set(key, value);
+    console.log('💾 Loaded cached verdicts:', checkedVideos.size);
+    resolve();
+  });
+});
+function rememberVerdict(key: string, value: boolean): void {
+  checkedVideos.set(key, value);
+  chrome.storage.local.set({ verdicts: Object.fromEntries(checkedVideos) });
+}
 
 // Global extension enabled state
 let extensionEnabled = true;
@@ -127,7 +140,7 @@ function isSponsoredContent(element: Element): boolean {
   try {
     // Check for sponsored content indicators
     const adBadgeElements = element.querySelectorAll(
-      'badge-shape-wiz--ad, .badge-shape-wiz--ads-include-dot, .ytwAdBadgeViewModelHost'
+      'badge-shape-wiz--ad, .badge-shape-wiz--ads-include-dot, .ytwAdBadgeViewModelHost, ad-badge-view-model, badge-shape.ytBadgeShapeAd, feed-ad-metadata-view-model'
     );
     const adTextElements = element.querySelectorAll('[title="Sponsored"]');
 
@@ -169,7 +182,10 @@ function getVideoInfo(element: Element): VideoInfo {
   try {
     // Extract video title - try new YouTube layout first, then legacy
     const titleSelectors = [
-      // New yt-lockup-view-model layout (2024+)
+      // yt-lockup-view-model layout, camelCase classes (mid-2026)
+      'h3.ytLockupMetadataViewModelHeadingReset',
+      '.ytLockupMetadataViewModelTitle',
+      // yt-lockup-view-model layout, BEM classes (2024-2025)
       'h3.yt-lockup-metadata-view-model__heading-reset',
       '.yt-lockup-metadata-view-model__title',
       'span.yt-core-attributed-string[role="text"]',
@@ -233,6 +249,19 @@ function getVideoInfo(element: Element): VideoInfo {
           break;
         }
       }
+      // Mid-2026 lockup layout: channel name is plain text in the first metadata row,
+      // no link. Skip rows that are view counts / dates.
+      // ponytail: regex on English strings; a locale-aware fallback would be a real parser.
+      if (creator === 'Unknown Creator') {
+        const rows = Array.from(element.querySelectorAll('.ytContentMetadataViewModelMetadataText'));
+        for (const row of rows) {
+          const text = row.firstChild?.textContent?.trim() || '';
+          if (text && !/\b(views?|ago|watching|streamed)\b/i.test(text)) {
+            creator = text;
+            break;
+          }
+        }
+      }
     } catch (error) {
       console.warn('⚠️ Error getting video creator:', error);
     }
@@ -248,12 +277,17 @@ function getVideoInfo(element: Element): VideoInfo {
       console.warn('⚠️ Error getting video description:', error);
     }
 
+    const id =
+      element.querySelector('a[href*="watch?v="]')?.getAttribute('href')?.match(/[?&]v=([\w-]+)/)?.[1] ||
+      undefined;
+
     console.log('📹 Found video info:', {
+      id,
       title,
       creator,
       description: description.substring(0, 50) + (description.length > 50 ? '...' : ''),
     });
-    return { title, creator, description };
+    return { id, title, creator, description };
   } catch (error) {
     console.warn('⚠️ Error getting video info:', error);
     return { title: 'Unknown Video', creator: 'Unknown Creator', description: '' };
@@ -419,13 +453,13 @@ async function waitForVideos(timeout = 10000): Promise<void> {
 }
 
 // Function to check video content with AI via background script
-function checkVideoContent(videoInfo: VideoInfo): Promise<boolean> {
-  const cacheKey = videoInfo.title;
+async function checkVideoContent(videoInfo: VideoInfo): Promise<boolean> {
+  const cacheKey = videoInfo.id || videoInfo.title;
 
-  // Check cache first
+  await verdictsLoaded;
   if (checkedVideos.has(cacheKey)) {
     console.log('💾 Cache hit for:', videoInfo.title);
-    return Promise.resolve(checkedVideos.get(cacheKey)!);
+    return checkedVideos.get(cacheKey)!;
   }
 
   console.log('🤖 Checking video content for:', videoInfo.title);
@@ -469,7 +503,7 @@ function checkVideoContent(videoInfo: VideoInfo): Promise<boolean> {
               response.isQualifying ? 'Qualified' : 'Not qualified'
             );
             // Cache the result
-            checkedVideos.set(cacheKey, response.isQualifying!);
+            rememberVerdict(cacheKey, response.isQualifying!);
             resolve(response.isQualifying!);
           }
         }

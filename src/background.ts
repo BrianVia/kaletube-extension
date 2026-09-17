@@ -6,26 +6,12 @@ import type {
   VideoInfo,
 } from './types';
 
-// Default API key will be replaced with user-configured key
-let TYPESAFE_API_KEY = '';
-
-// Load API key from storage
-chrome.storage.sync.get('typesafeApiKey', (data: StorageData) => {
-  if (data.typesafeApiKey) {
-    console.log('🔑 API key loaded from storage');
-    TYPESAFE_API_KEY = data.typesafeApiKey;
-  } else {
-    console.warn('⚠️ No API key found in storage');
-  }
-});
-
-// Listen for API key changes
-chrome.storage.onChanged.addListener((changes, namespace) => {
-  if (namespace === 'sync' && changes.typesafeApiKey) {
-    console.log('🔄 API key updated');
-    TYPESAFE_API_KEY = (changes.typesafeApiKey.newValue as string) || '';
-  }
-});
+// Read the key on every request. MV3 workers restart often, and a cached module
+// variable races the first message after restart (banner shows despite a key being set).
+async function getApiKey(): Promise<string> {
+  const data: StorageData = await chrome.storage.sync.get('typesafeApiKey');
+  return data.typesafeApiKey || '';
+}
 
 interface SystemOneResponse {
   answers: {
@@ -38,6 +24,7 @@ interface SystemOneResponse {
 
 async function classifyVideo(
   video: VideoInfo,
+  apiKey: string,
   retryCount = 0
 ): Promise<{ category: VideoCategory; confidence: number } | null> {
   const MAX_RETRIES = 3;
@@ -76,7 +63,7 @@ async function classifyVideo(
     const response = await fetch('https://api.typesafe.ai/v1/systemone', {
       method: 'POST',
       headers: {
-        Authorization: `Bearer ${TYPESAFE_API_KEY}`,
+        Authorization: `Bearer ${apiKey}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify(requestBody),
@@ -91,7 +78,7 @@ async function classifyVideo(
           `⏳ Rate limited. Retrying in ${delay}ms... (attempt ${retryCount + 1}/${MAX_RETRIES})`
         );
         await new Promise((r) => setTimeout(r, delay));
-        return classifyVideo(video, retryCount + 1);
+        return classifyVideo(video, apiKey, retryCount + 1);
       }
       throw new Error(`API request failed: ${response.status} ${response.statusText}`);
     }
@@ -125,24 +112,27 @@ chrome.runtime.onMessage.addListener(
           : '',
       });
 
-      // Check if API key is configured
-      if (!TYPESAFE_API_KEY) {
-        console.error('❌ No API key configured');
-        sendResponse({ error: 'API key not configured', needsApiKey: true });
-        return true;
-      }
-
-      // Call the Jev API and send the response back to the content script
-      classifyVideo(request.videoInfo)
-        .then((result) => {
-          console.log(`🤖 API result for "${title}":`, result);
-          if (!result) {
-            sendResponse({ error: 'Failed to analyze video content' });
+      getApiKey()
+        .then((apiKey) => {
+          if (!apiKey) {
+            console.error('❌ No API key configured');
+            sendResponse({ error: 'API key not configured', needsApiKey: true });
             return;
           }
-          const { category, confidence } = result;
-          const isQualifying = category !== 'distraction';
-          sendResponse({ isQualifying, category, confidence });
+          return classifyVideo(request.videoInfo, apiKey).then((result) => {
+            console.log(`🤖 API result for "${title}":`, result);
+            if (!result) {
+              sendResponse({ error: 'Failed to analyze video content' });
+              return;
+            }
+            const { category, confidence } = result;
+            const isQualifying = category !== 'distraction';
+            sendResponse({ isQualifying, category, confidence });
+          });
+        })
+        .catch((error) => {
+          console.error('❌ Error in Jev API call:', error);
+          sendResponse({ error: 'Failed to analyze video content' });
         });
 
       // Return true to indicate that the response will be sent asynchronously
