@@ -1,6 +1,6 @@
 // Storage types
 export interface StorageData {
-  geminiApiKey?: string;
+  typesafeApiKey?: string;
   extensionEnabled?: boolean;
   whitelist?: string[];
   blocklist?: string[];
@@ -22,6 +22,8 @@ export interface VideoInfo {
   description: string;
 }
 
+export type VideoCategory = 'educational' | 'ambient_music' | 'distraction';
+
 // Message types between content and background scripts
 export interface CheckVideoMessage {
   action: 'checkVideo';
@@ -30,6 +32,8 @@ export interface CheckVideoMessage {
 
 export interface CheckVideoResponse {
   isQualifying?: boolean;
+  category?: VideoCategory;
+  confidence?: number;
   error?: string;
   needsApiKey?: boolean;
 }

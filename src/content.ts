@@ -95,7 +95,7 @@ function showApiKeyNotice(): void {
 
   const message = document.createElement('p');
   message.style.cssText = 'margin: 0 0 10px 0; font-size: 14px;';
-  message.textContent = 'Please configure your Gemini API key in the extension settings.';
+  message.textContent = 'Please configure your TypeSafe API key in the extension settings.';
 
   const configButton = document.createElement('button');
   configButton.id = 'kaletube-open-options';
