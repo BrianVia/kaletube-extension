@@ -147,12 +147,11 @@ function isSponsoredContent(element: Element): boolean {
     // Check for text content separately since :contains() isn't valid CSS
     const allSpans = element.querySelectorAll('span');
     const allDivs = element.querySelectorAll('div');
-    const sponsoredSpans = Array.from(allSpans).filter((span) =>
-      span.textContent?.includes('Sponsored')
-    );
-    const sponsoredDivs = Array.from(allDivs).filter(
-      (div) => div.textContent?.includes('Sponsored') || div.textContent?.includes('Ad')
-    );
+    // Exact-text match only: a substring check on "Ad" matched "Advertise" in the
+    // sidebar footer and "Add to queue", deleting the nav and player menus.
+    const isAdLabel = (el: Element) => /^(Sponsored|Ad)$/.test(el.textContent?.trim() ?? '');
+    const sponsoredSpans = Array.from(allSpans).filter(isAdLabel);
+    const sponsoredDivs = Array.from(allDivs).filter(isAdLabel);
 
     const adRenderingElements = element.querySelectorAll(
       'ytd-in-feed-ad-layout-renderer, div#rendering-content'
@@ -168,7 +167,6 @@ function isSponsoredContent(element: Element): boolean {
       sponsoredDivs.length > 0 ||
       adRenderingElements.length > 0 ||
       hasAdMetadata ||
-      (element.textContent?.includes('Sponsored') ?? false) ||
       element.innerHTML.includes('ytd-in-feed-ad')
     );
   } catch (error) {
@@ -305,10 +303,13 @@ function hideVideo(element: Element): void {
   if (gridCell) {
     console.log('🚫 Removing video container from grid');
     gridCell.remove();
-  } else {
-    // Fallback: remove the element itself
-    console.log('🚫 Removing video element directly');
+  } else if (element.matches(AD_SELECTORS.join(', '))) {
+    // Standalone ad unit outside the video grid (e.g. watch-page companion ad)
+    console.log('🚫 Removing standalone ad element');
     element.remove();
+  } else {
+    // Never delete arbitrary page chrome (sidebar, player menus, etc.)
+    console.log('⏭️ Not a video card or ad unit, leaving in place:', element.tagName);
   }
 }
 
