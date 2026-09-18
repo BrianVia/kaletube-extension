@@ -54,7 +54,7 @@ async function classifyVideo(
             ambient_music:
               'Music or sound suitable as background while working or exercising: EDM mixes, lo-fi, ambient, study/focus playlists, film soundtracks, workout mixes',
             distraction:
-              'Entertainment with no learning or work value: video games and esports, memes, TikTok trends, reactions, movie/TV/anime reviews or clips, celebrity gossip, cooking and eating shows, vlogs, pranks, sports highlights',
+              'Entertainment with no learning or work value: video games and esports, memes, TikTok trends, reactions, movie/TV/anime trailers, teasers, reviews or clips, celebrity gossip, cooking and eating shows, vlogs, pranks, sports highlights',
           },
         },
       },
